@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlayTube - Professional Edition</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: #ffffff;
+            color: #0f172a;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* 1. Starting / Splash Intro */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .balloon-intro-wrapper {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: introOpenAnimation 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes introOpenAnimation {
+            0% { transform: scale(0.2); opacity: 0; }
+            50% { transform: scale(1.25); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .water-balloon {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), rgba(56, 189, 248, 0.5) 50%, rgba(2, 132, 199, 0.9) 100%);
+            border-radius: 50% 50% 48% 48% / 55% 55% 45% 45%;
+            box-shadow: inset -12px -12px 25px rgba(0, 0, 0, 0.15),
+                        inset 12px 12px 25px rgba(255, 255, 255, 0.9),
+                        0 20px 40px rgba(2, 132, 199, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .water-balloon::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 18px;
+            width: 25px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            transform: rotate(-35deg);
+        }
+
+        .water-bubbles-container {
+            position: absolute;
+            bottom: 2px;
+            width: 100%;
+            height: 25px;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            pointer-events: none;
+        }
+
+        .tiny-bubble {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(2, 132, 199, 0.5);
+            animation: riseBubble 1.5s infinite ease-in;
+        }
+
+        .tiny-bubble:nth-child(1) { width: 6px; height: 6px; left: 15px; animation-delay: 0s; }
+        .tiny-bubble:nth-child(2) { width: 9px; height: 9px; left: 35px; animation-delay: 0.3s; }
+        .tiny-bubble:nth-child(3) { width: 5px; height: 5px; left: 55px; animation-delay: 0.1s; }
+        .tiny-bubble:nth-child(4) { width: 8px; height: 8px; left: 75px; animation-delay: 0.5s; }
+
+        @keyframes riseBubble {
+            0% { transform: translateY(0) scale(1); opacity: 0.9; }
+            100% { transform: translateY(-18px) scale(1.3); opacity: 0; }
+        }
+
+        .balloon-letter {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            z-index: 2;
+        }
+
+        .intro-content-reveal {
+            margin-top: 20px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: revealOptions 1s ease forwards 1.2s;
+        }
+
+        @keyframes revealOptions {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .splash-title {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #0f172a;
+            margin-bottom: 15px;
+        }
+
+        .splash-title span { color: #0284c7; }
+
+        .intro-options-box {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            color: #0284c7;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .intro-options-box:hover { background: #e2e8f0; }
+
+        /* 2. Main App Interface */
+        #main-app {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.6s ease-in;
+            min-height: 100vh;
+            background: #ffffff;
+        }
+
+        .app-header {
+            background-color: #ffffff;
+            padding: 14px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .header-icon-box {
+            width: 38px;
+            height: 38px;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), #0284c7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .header-title span { color: #0284c7; }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            padding: 8px 16px;
+            width: 40%;
+            max-width: 450px;
+        }
+
+        .search-input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 100%;
+            padding: 2px 6px;
+            font-size: 0.9rem;
+            color: #0f172a;
+        }
+
+        .search-input::placeholder { color: #64748b; }
+
+        .search-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            color: #0284c7;
+        }
+
+        /* Sign-in Section */
+        .content-area {
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            padding: 40px 36px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card-p-logo {
+            width: 65px;
+            height: 65px;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), #0284c7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3);
+            color: white;
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+
+        .auth-card h2 { color: #0f172a; font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+        .auth-card p { color: #64748b; font-size: 0.9rem; margin-bottom: 24px; }
+
+        .btn-google {
+            width: 100%;
+            padding: 11px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #0f172a;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            margin: 18px 0;
+            width: 100%;
+        }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
+        .divider::before { margin-right: 10px; }
+        .divider::after { margin-left: 10px; }
+
+        form { width: 100%; text-align: left; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
+        .form-input {
+            width: 100%;
+            padding: 11px 14px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            color: #0f172a;
+            outline: none;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        /* YouTube Style Home Feed & Professional Sections */
+        #home-feed {
+            display: none;
+            padding: 24px 40px;
+        }
+
+        .categories-bar {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            scrollbar-width: none;
+        }
+        .categories-bar::-webkit-scrollbar { display: none; }
+
+        .cat-chip {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #0f172a;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .cat-chip.active, .cat-chip:hover {
+            background: #0f172a;
+            color: #ffffff;
+            border-color: #0f172a;
+        }
+
+        .section-header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 25px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Shorts Section Layout */
+        .shorts-horizontal-container {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            scrollbar-width: none;
+        }
+        .shorts-horizontal-container::-webkit-scrollbar { display: none; }
+
+        .short-card {
+            min-width: 170px;
+            height: 280px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 12px;
+        }
+        .short-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+        }
+        .short-card-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+            z-index: 1;
+        }
+        .short-card-content {
+            position: relative;
+            z-index: 2;
+        }
+        .short-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .short-views {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        /* Video Grid Layout */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .video-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .video-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            font-weight: 600;
+            color: #475569;
+        }
+        .video-duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #fff;
+        }
+
+        .video-info-box {
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+        }
+        .channel-avatar {
+            width: 36px;
+            height: 36px;
+            background: #0284c7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+        .video-details h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .video-details p {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        /* Blank Initial State Notice */
+        .empty-feed-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #64748b;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Starting / Splash Intro -->
+    <div id="splash-screen">
+        <div class="balloon-intro-wrapper">
+            <div class="water-balloon">
+                <span class="balloon-letter">P</span>
+                <div class="water-bubbles-container">
+                    <div class="tiny-bubble"></div>
+                    <div class="tiny-bubble"></div>
+                    <div class="tiny-bubble"></div>
+                    <div class="tiny-bubble"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="intro-content-reveal">
+            <h1 class="splash-title">Play<span>Tube</span></h1>
+            <div class="intro-options-box" onclick="enterApp()">Tap to Open App</div>
+        </div>
+    </div>
+
+    <!-- 2. Main App Interface -->
+    <div id="main-app">
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="header-icon-box">P</div>
+                <span class="header-title">Play<span>Tube</span></span>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="search-bar-input" class="search-input" placeholder="Search videos, songs, dances..." onkeyup="handleSearchInput(event)">
+                <button class="search-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Sign-in Section -->
+        <main class="content-area" id="sign-in-section">
+            <div class="auth-card">
+                <div class="card-p-logo">P</div>
+                <h2>Welcome Back</h2>
+                <p>Sign in to your PlayTube account</p>
+
+                <!-- Clean Direct Google Sign In Button (No Fake Popups) -->
+                <button class="btn-google" id="google-login-btn" onclick="directGoogleLogin()">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z"/>
+                        <path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"/>
+                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/>
+                    </svg>
+                    Continue with Google
+                </button>
+
+                <div class="divider">or email</div>
+
+                <form onsubmit="handleEmailLogin(event)">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" class="form-input" placeholder="name@example.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Sign In</button>
+                </form>
+            </div>
+        </main>
+
+        <!-- YouTube Style Video Feed -->
+        <main id="home-feed" style="display: none;">
+            <div class="categories-bar">
+                <div class="cat-chip active" onclick="filterCategory('All')">All</div>
+                <div class="cat-chip" onclick="filterCategory('Songs')">Songs (گانے)</div>
+                <div class="cat-chip" onclick="filterCategory('Dance')">Dance (ناچ)</div>
+                <div class="cat-chip" onclick="filterCategory('Shorts')">Shorts</div>
+                <div class="cat-chip" onclick="filterCategory('Long Videos')">Long Videos</div>
+            </div>
+
+            <!-- Initial Clean Blank State Message -->
+            <div id="initial-blank-message" class="empty-feed-state">
+                <p>✨ Welcome to PlayTube! Use the search bar above or click a category tab to explore content.</p>
+            </div>
+
+            <!-- Content Container -->
+            <div id="dynamic-content-area" style="display: none;">
+                <!-- YouTube Shorts Section -->
+                <div class="section-header-title">
+                    ⚡ Shorts
+                </div>
+                <div class="shorts-horizontal-container">
+                    <div class="short-card">
+                        <div class="short-card-bg"></div>
+                        <div class="short-card-content">
+                            <h4 class="short-title">Fast Viral Clip #shorts</h4>
+                            <span class="short-views">120K views</span>
+                        </div>
+                    </div>
+                    <div class="short-card">
+                        <div class="short-card-bg" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8);"></div>
+                        <div class="short-card-content">
+                            <h4 class="short-title">Dance Step Tutorial #shorts</h4>
+                            <span class="short-views">340K views</span>
+                        </div>
+                    </div>
+                    <div class="short-card">
+                        <div class="short-card-bg" style="background: linear-gradient(135deg, #fef3c7, #fde68a);"></div>
+                        <div class="short-card-content">
+                            <h4 class="short-title">Quick Song Preview #shorts</h4>
+                            <span class="short-views">95K views</span>
+                        </div>
+                    </div>
+                    <div class="short-card">
+                        <div class="short-card-bg" style="background: linear-gradient(135deg, #dcfce7, #bbf7d0);"></div>
+                        <div class="short-card-content">
+                            <h4 class="short-title">Funny Moments #shorts</h4>
+                            <span class="short-views">520K views</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommended Videos Grid Section -->
+                <div class="section-header-title">
+                    ▶️ Recommended Videos
+                </div>
+                <div class="video-grid">
+                    <!-- Video Item 1 - Song -->
+                    <div class="video-card">
+                        <div class="video-thumbnail">
+                            🎵 Top Hit Trending Song 2026
+                            <span class="video-duration">3:45</span>
+                        </div>
+                        <div class="video-info-box">
+                            <div class="channel-avatar">P</div>
+                            <div class="video-details">
+                                <h4>Official Music Track HD</h4>
+                                <p>PlayTube Music • 125K views</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Item 2 - Dance -->
+                    <div class="video-card">
+                        <div class="video-thumbnail">
+                            💃 Cultural Dance Show
+                            <span class="video-duration">4:12</span>
+                        </div>
+                        <div class="video-info-box">
+                            <div class="channel-avatar">T</div>
+                            <div class="video-details">
+                                <h4>Amazing Dance Choreography HD</h4>
+                                <p>Trend Hub • 82K views</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Item 3 - Long Video -->
+                    <div class="video-card">
+                        <div class="video-thumbnail">
+                            ▶️ Cinematic Vlog Production
+                            <span class="video-duration">18:30</span>
+                        </div>
+                        <div class="video-info-box">
+                            <div class="channel-avatar">P</div>
+                            <div class="video-details">
+                                <h4>Complete Cinematic Vlog Part 1</h4>
+                                <p>PlayTube Creators • 45K views</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function enterApp() {
+            const splash = document.getElementById('splash-screen');
+            const mainApp = document.getElementById('main-app');
+            
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+            
+            mainApp.style.display = 'block';
+            setTimeout(() => {
+                mainApp.style.opacity = '1';
+            }, 50);
+        }
+
+        function directGoogleLogin() {
+            // Direct sign-in transition without fake account popups
+            loginSuccess("User");
+        }
+
+        function handleEmailLogin(e) {
+            e.preventDefault();
+            const emailVal = document.getElementById('email').value;
+            loginSuccess(emailVal.split('@')[0]);
+        }
+
+        function loginSuccess(userName) {
+            document.getElementById('sign-in-section').style.display = 'none';
+            document.getElementById('home-feed').style.display = 'block';
+        }
+
+        function filterCategory(categoryName) {
+            const chips = document.querySelectorAll('.cat-chip');
+            chips.forEach(chip => chip.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('initial-blank-message').style.display = 'none';
+            document.getElementById('dynamic-content-area').style.display = 'block';
+        }
+
+        function handleSearchInput(e) {
+            if(e.target.value.trim().length > 0) {
+                document.getElementById('initial-blank-message').style.display = 'none';
+                document.getElementById('dynamic-content-area').style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
